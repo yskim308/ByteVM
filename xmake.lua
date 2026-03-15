@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-target("bytecode")
+target("clox")
 set_kind("binary")
 add_files("src/*.c")
 add_includedirs("include")
