@@ -9,7 +9,7 @@ typedef struct {
   Value *values;
 } ValueArray;
 
-void init_array(ValueArray *array);
+void init_value_array(ValueArray *array);
 
 void write_to_value_array(ValueArray *array, Value value);
 
