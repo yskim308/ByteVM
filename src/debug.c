@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "../include/chunk.h"
 #include "../include/common.h"
 #include "../include/debug.h"
 
@@ -27,10 +28,12 @@ static int constant_instruction(const char *name, Chunk *chunk, int offset) {
 
 int disassemble_instruction(Chunk *chunk, int offset) {
   printf("%04d ", offset);
-  if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+
+  int current_line = get_line(&chunk->lines, offset);
+  if (offset > 0 && current_line == get_line(&chunk->lines, offset - 1)) {
     printf("  | ");
   } else {
-    printf("%4d ", chunk->lines[offset]);
+    printf("%4d ", chunk->lines.entries[offset].line);
   }
 
   uint8_t instruction = chunk->code[offset];
