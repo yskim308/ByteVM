@@ -4,7 +4,7 @@
 #include "common.h"
 #include "value.h"
 
-typedef enum { OP_RETURN } OpCOde;
+typedef enum { OP_RETURN, OP_CONSTANT } OpCOde;
 
 typedef struct {
   int count;

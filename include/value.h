@@ -15,4 +15,6 @@ void write_to_value_array(ValueArray *array, Value value);
 
 void free_value_array(ValueArray *array);
 
+void print_value(Value value);
+
 #endif

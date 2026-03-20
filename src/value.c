@@ -3,7 +3,7 @@
 #include "../include/memory.h"
 #include "../include/value.h"
 
-void init__value_array(ValueArray *array) {
+void init_value_array(ValueArray *array) {
   array->capacity = 0;
   array->count = 0;
   array->values = NULL;
@@ -23,5 +23,7 @@ void write_to_value_array(ValueArray *array, Value value) {
 
 void free_value_array(ValueArray *array) {
   FREE_ARRAY(Value, array->values, array->count);
-  init__value_array(array);
+  init_value_array(array);
 }
+
+void print_value(Value value) { printf("%g", value); }
