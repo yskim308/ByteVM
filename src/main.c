@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
   write_chunk(&chunk, OP_RETURN, 123);
 
   disassemble_chunk(&chunk, "TEST CHUNK");
+  interpret(&chunk);
 
   free_VM();
   free_chunk(&chunk);
