@@ -6,9 +6,27 @@
 void init_chunk(Chunk *chunk) {
   chunk->capacity = 0;
   chunk->count = 0;
+  chunk->line_count = 0;
   chunk->code = NULL;
   chunk->lines = NULL;
   init_value_array(&chunk->constants);
+}
+
+void init_line_entry(LineEntry *entry, int line) {
+  entry->count = 0;
+  entry->line = line;
+}
+
+int get_line(Chunk *chunk, int instruction_idx) {
+  int lines_covered = 0;
+  int lines_idx = 0;
+
+  while (lines_covered < instruction_idx) {
+    lines_covered += chunk->lines[lines_idx].count;
+    lines_idx += 1;
+  }
+
+  return lines_idx - 1;
 }
 
 void write_chunk(Chunk *chunk, uint8_t byte, int line) {
@@ -17,11 +35,18 @@ void write_chunk(Chunk *chunk, uint8_t byte, int line) {
     chunk->capacity = GROW_CAPACITY(old_capacity);
     chunk->code =
         GROW_ARRAY(uint8_t, chunk->code, old_capacity, chunk->capacity);
-    chunk->lines = GROW_ARRAY(int, chunk->lines, old_capacity, chunk->capacity);
+    chunk->lines =
+        GROW_ARRAY(LineEntry, chunk->lines, old_capacity, chunk->capacity);
   }
 
   chunk->code[chunk->count] = byte;
-  chunk->lines[chunk->count] = line;
+  if (chunk->lines[chunk->count].line == line) {
+    chunk->lines[chunk->count].count += 1;
+  } else {
+    LineEntry entry;
+    init_line_entry(&entry, line);
+    chunk->lines[chunk->count + 1] = entry;
+  }
   ++chunk->count;
 }
 
