@@ -88,7 +88,7 @@ static void skip_whitespace() {
         return;
       }
       break;
-    deafult:
+    default:
       return;
     }
   }
