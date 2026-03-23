@@ -18,6 +18,10 @@ void init_scanner(const char *source) {
   scanner.line = 0;
 }
 
+static bool is_alpha(char c) {
+  return (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '_');
+}
+
 static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 static bool is_at_end() { return *scanner.current == '\0'; }
@@ -90,6 +94,62 @@ static void skip_whitespace() {
   }
 }
 
+static TokenType check_keyword(int start, int length, const char *rest,
+                               TokenType type) {
+  if (scanner.current - scanner.start == start + length &&
+      memcmp(scanner.current + start, rest, length) == 0) {
+    return type;
+  }
+
+  return TOKEN_IDENTIFIER;
+}
+
+static TokenType identifier_type() {
+  switch (scanner.start[0]) {
+  case 'a':
+    return check_keyword(1, 2, "nd", TOKEN_AND);
+  case 'c':
+    return check_keyword(1, 4, "lass", TOKEN_CLASS);
+  case 'e':
+    return check_keyword(1, 3, "lse", TOKEN_ELSE);
+  case 'f':
+    if (scanner.current - scanner.start > 1) {
+      switch (scanner.start[1]) {
+      case 'a':
+        return check_keyword(2, 3, "lse", TOKEN_FALSE);
+      case 'u':
+        return check_keyword(2, 1, "n", TOKEN_FUN);
+      case 'o':
+        return check_keyword(2, 1, "r", TOKEN_FOR);
+      }
+    }
+    break;
+  case 'i':
+    return check_keyword(1, 1, "f", TOKEN_IF);
+  case 'n':
+    return check_keyword(1, 2, "il", TOKEN_NIL);
+  case 'o':
+    return check_keyword(1, 1, "r", TOKEN_OR);
+  case 'p':
+    return check_keyword(1, 4, "rint", TOKEN_PRINT);
+  case 'r':
+    return check_keyword(1, 5, "eturn", TOKEN_RETURN);
+  case 's':
+    return check_keyword(1, 4, "uper", TOKEN_SUPER);
+  case 'v':
+    return check_keyword(1, 2, "ar", TOKEN_VAR);
+  case 'w':
+    return check_keyword(1, 4, "hile", TOKEN_WHILE);
+  }
+  return TOKEN_IDENTIFIER;
+}
+
+static Token identifier() {
+  while (is_alpha(peek()) || is_digit(peek()))
+    advance();
+  return make_token(identifier_type());
+}
+
 static Token number() {
   while (is_digit(peek()))
     advance();
@@ -128,6 +188,8 @@ Token scan_token() {
   char c = advance();
   if (is_digit(c))
     return number();
+  if (is_alpha(c))
+    return identifier();
 
   switch (c) {
   case '(':
