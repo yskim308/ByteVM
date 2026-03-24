@@ -1,0 +1,46 @@
+[
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/scanner.c.o", "src/scanner.c"],
+  "file": "src/scanner.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/memory.c.o", "src/memory.c"],
+  "file": "src/memory.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/vm.c.o", "src/vm.c"],
+  "file": "src/vm.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/line.c.o", "src/line.c"],
+  "file": "src/line.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/debug.c.o", "src/debug.c"],
+  "file": "src/debug.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/main.c.o", "src/main.c"],
+  "file": "src/main.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/chunk.c.o", "src/chunk.c"],
+  "file": "src/chunk.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/compiler.c.o", "src/compiler.c"],
+  "file": "src/compiler.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/value.c.o", "src/value.c"],
+  "file": "src/value.c"
+}]
