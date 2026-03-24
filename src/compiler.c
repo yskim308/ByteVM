@@ -1,3 +1,5 @@
+#include <cstdlib>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -75,6 +77,25 @@ static void emit_two_bytes(Byte byte1, Byte byte2) {
 static void emit_return() { emit_byte(OP_RETURN); }
 
 static void end_compiler() { emit_return(); }
+
+static Byte make_constant(Value value) {
+  int constant = add_constant(current_chunk(), value);
+  if (constant > UINT8_MAX) {
+    error("Too many constants in one chunk");
+    return 0;
+  }
+
+  return (Byte)constant;
+}
+
+static void emit_constant(Value value) {
+  emit_two_bytes(OP_CONSTANT, make_constant(value));
+}
+
+static void number() {
+  double value = strtod(parser.previous.start, NULL);
+  emit_constant(value);
+}
 
 bool compile(const char *source, Chunk *chunk) {
   init_scanner(source);
