@@ -6,6 +6,10 @@
 #include "../include/compiler.h"
 #include "../include/scanner.h"
 
+#ifdef DEBUG_PRINT_CODE
+#include "../include/debug.h"
+#endif
+
 typedef struct {
   Token current;
   Token previous;
@@ -97,7 +101,14 @@ static void emit_two_bytes(Byte byte1, Byte byte2) {
 
 static void emit_return() { emit_byte(OP_RETURN); }
 
-static void end_compiler() { emit_return(); }
+static void end_compiler() {
+  emit_return();
+#ifdef DEBUG_PRINT_CODE
+  if (!parser.had_error) {
+    disassemble_chunk(current_chunk(), "code");
+  }
+#endif
+}
 
 // forward declarations
 static void expression();
