@@ -1,6 +1,6 @@
-#include "../include/vm.h"
-#include "../include/compiler.h"
-#include "../include/debug.h"
+#include "vm.h"
+#include "compiler.h"
+#include "debug.h"
 
 #include <stdarg.h>
 #include <stdio.h>

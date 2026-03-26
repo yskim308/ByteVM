@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "../include/memory.h"
-#include "../include/value.h"
+#include "memory.h"
+#include "value.h"
 
 void init_value_array(ValueArray *array) {
   array->capacity = 0;

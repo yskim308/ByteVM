@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../include/chunk.h"
-#include "../include/memory.h"
+#include "chunk.h"
+#include "memory.h"
 
 void init_chunk(Chunk *chunk) {
   chunk->capacity = 0;

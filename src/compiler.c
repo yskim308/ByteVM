@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../include/common.h"
-#include "../include/compiler.h"
-#include "../include/object.h"
-#include "../include/scanner.h"
+#include "compiler.h"
+#include "object.h"
+#include "scanner.h"
+#include "common.h"
 
 #ifdef DEBUG_PRINT_CODE
-#include "../include/debug.h"
+#include "debug.h"
 #endif
 
 typedef struct {
