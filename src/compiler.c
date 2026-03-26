@@ -56,7 +56,7 @@ static void error_at(Token *token, const char *message) {
   } else if (token->type == TOKEN_ERROR) {
     // nothing
   } else {
-    fprintf(stderr, "at '%.*s'", token->length, token->start);
+    fprintf(stderr, " at '%.*s'", token->length, token->start);
   }
 
   fprintf(stderr, ": %s\n", message);
@@ -125,19 +125,19 @@ static void binary() {
     emit_two_bytes(OP_EQUAL, OP_NOT);
     break;
   case TOKEN_EQUAL_EQUAL:
-    emit_two_bytes(OP_EQUAL, OP_EQUAL);
+    emit_byte(OP_EQUAL);
     break;
   case TOKEN_GREATER:
     emit_byte(OP_GREATER);
     break;
   case TOKEN_GREATER_EQUAL:
-    emit_two_bytes(OP_EQUAL, OP_GREATER);
+    emit_two_bytes(OP_LESS, OP_NOT);
     break;
   case TOKEN_LESS:
     emit_byte(OP_LESS);
     break;
   case TOKEN_LESS_EQUAL:
-    emit_two_bytes(OP_EQUAL, OP_LESS);
+    emit_two_bytes(OP_GREATER, OP_NOT);
     break;
   case TOKEN_PLUS:
     emit_byte(OP_ADD);
@@ -226,13 +226,13 @@ ParseRule rules[] = {
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
-    [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_NONE},
+    [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_NONE},
-    [TOKEN_GREATER] = {NULL, binary, PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_NONE},
-    [TOKEN_LESS] = {NULL, binary, PREC_NONE},
-    [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_NONE},
+    [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
     [TOKEN_STRING] = {NULL, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
