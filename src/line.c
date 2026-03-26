@@ -1,5 +1,5 @@
-#include "../include/line.h"
-#include "../include/memory.h"
+#include "line.h"
+#include "memory.h"
 
 void init_line_array(LineArray *array) {
   array->capacity = 0;
