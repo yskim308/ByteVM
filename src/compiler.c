@@ -182,6 +182,9 @@ static void unary() {
   parse_precedence(PREC_UNARY);
 
   switch (op_type) {
+  case TOKEN_BANG:
+    emit_byte(OP_NOT);
+    break;
   case TOKEN_MINUS:
     emit_byte(OP_NEGATE);
     break;
@@ -202,7 +205,7 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
-    [TOKEN_BANG] = {NULL, NULL, PREC_NONE},
+    [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, NULL, PREC_NONE},
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
     [TOKEN_EQUAL_EQUAL] = {NULL, NULL, PREC_NONE},
