@@ -7,7 +7,7 @@
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
-#define IS_STIRNG(value) is_obj_type(value, OBJ_STRING)
+#define IS_STRING(value) is_obj_type(value, OBJ_STRING)
 
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
@@ -26,6 +26,7 @@ struct ObjString {
   char *chars;
 };
 
+ObjString *take_string(char *chars, int length);
 ObjString *copy_string(const char *chars, int length);
 
 void print_object(Value value) {
