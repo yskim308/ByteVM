@@ -27,7 +27,7 @@ static void runtime_error(const char *format, ...) {
 
 void init_VM() { reset_stack(); }
 
-void free_VM() {}
+void free_VM() { free_objects(); }
 
 void push(Value value) {
   *vm.stack_top = value;
