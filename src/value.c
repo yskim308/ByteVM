@@ -1,7 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "memory.h"
+#include "object.h"
 #include "value.h"
 
 void init_value_array(ValueArray *array) {
@@ -55,6 +57,12 @@ bool values_equal(Value a, Value b) {
     return true;
   case VAL_NUMBER:
     return AS_NUMBER(a) == AS_NUMBER(b);
+  case VAL_OBJ: {
+    ObjString *a_string = AS_STRING(a);
+    ObjString *b_string = AS_STRING(b);
+    return (a_string->length == b_string->length &&
+            memcmp(a_string->chars, b_string->chars, a_string->length));
+  }
   default:
     return false;
   }
