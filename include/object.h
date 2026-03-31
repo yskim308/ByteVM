@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "value.h"
+#include <stdio.h>
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
@@ -26,6 +27,14 @@ struct ObjString {
 };
 
 ObjString *copy_string(const char *chars, int length);
+
+void print_object(Value value) {
+  switch (OBJ_TYPE(value)) {
+  case OBJ_STRING:
+    printf("%s", AS_CSTRING(value));
+    break;
+  }
+}
 
 static inline bool is_obj_type(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
