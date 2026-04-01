@@ -21,10 +21,18 @@ void free_table(Table *table) {
 
 static Entry *find_entry(Entry *entries, int capacity, ObjString *key) {
   uint32_t index = key->hash % capacity;
+  Entry *tombstone = NULL;
 
   for (;;) {
     Entry *entry = &entries[index];
-    if (entry->key == key || entry->key == NULL) {
+    if (entry->key == NULL) {
+      if (IS_NIL(entry->value)) {
+        return tombstone == NULL ? entry : tombstone;
+      } else {
+        if (tombstone == NULL)
+          tombstone = entry;
+      }
+    } else if (entry->key == key) {
       return entry;
     }
 
@@ -53,6 +61,7 @@ static void adjust_capacity(Table *table, int capacity) {
     entries->value = NIL_VAL;
   }
 
+  table->count = 0;
   for (int i = 0; i < table->capacity; ++i) {
     Entry *entry = &table->entries[i];
     if (entry == NULL)
@@ -61,6 +70,7 @@ static void adjust_capacity(Table *table, int capacity) {
     Entry *dest = find_entry(entries, capacity, entry->key);
     dest->key = entry->key;
     dest->value = entry->value;
+    table->count++;
   }
 
   FREE_ARRAY(Entry, table->entries, table->capacity);
@@ -76,7 +86,7 @@ bool table_set(Table *table, ObjString *key, Value value) {
 
   Entry *entry = find_entry(table->entries, table->capacity, key);
   bool is_new = entry->key == NULL;
-  if (is_new) {
+  if (is_new && IS_NIL(entry->value)) {
     table->count++;
   }
 
@@ -84,6 +94,19 @@ bool table_set(Table *table, ObjString *key, Value value) {
   entry->value = value;
 
   return is_new;
+}
+
+bool table_delete(Table *table, ObjString *key) {
+  if (table->count == 0)
+    return false;
+
+  Entry *entry = find_entry(table->entries, table->capacity, key);
+  if (entry->key == NULL)
+    return false;
+
+  entry->key = NULL;
+  entry->value = BOOL_VAL(true);
+  return true;
 }
 
 void table_add_all(Table *from, Table *to) {
