@@ -32,6 +32,20 @@ static Entry *find_entry(Entry *entries, int capacity, ObjString *key) {
   }
 }
 
+bool table_get(Table *table, ObjString *key, Value *value) {
+  if (table->count == 0)
+    return false;
+
+  Entry *entry = find_entry(table->entries, table->capacity, key);
+
+  if (entry->key == NULL) {
+    return false;
+  }
+
+  *value = entry->value;
+  return true;
+}
+
 static void adjust_capacity(Table *table, int capacity) {
   Entry *entries = ALLOCATE(Entry, capacity);
   for (int i = 0; i < capacity; ++i) {
