@@ -11,12 +11,14 @@ typedef struct {
 
 typedef struct {
   int count;
-  int capcity;
+  int capacity;
   Entry *entries;
 } Table;
 
 void init_table(Table *table);
 
 void free_table(Table *table);
+
+bool table_set(Table *table, ObjString *key, Value value);
 
 #endif // !CLOX_TABLE_H
