@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "chunk.h"
 #include "compiler.h"
 #include "debug.h"
 #include "memory.h"
@@ -125,10 +126,10 @@ static InterpretResult run() {
     case OP_LESS:
       BINARY_OP(BOOL_VAL, <);
       break;
-    case OP_RETURN: {
+    case OP_PRINT: {
       print_value(pop());
       printf("\n");
-      return INTERPRET_OK;
+      break;
     }
     case OP_ADD: {
       if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {

@@ -6,6 +6,11 @@
 },
 {
   "directory": "/Users/young/Code/sideProjects/bytecode",
+  "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/table.c.o", "src/table.c"],
+  "file": "src/table.c"
+},
+{
+  "directory": "/Users/young/Code/sideProjects/bytecode",
   "arguments": ["/Library/Developer/CommandLineTools/usr/bin/clang", "-c", "-Qunused-arguments", "-arch", "arm64", "-target", "arm64-apple-macos", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk", "-g", "-O0", "-Iinclude", "-o", "build/.objs/clox/macosx/arm64/debug/src/object.c.o", "src/object.c"],
   "file": "src/object.c"
 },
