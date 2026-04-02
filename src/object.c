@@ -3,6 +3,7 @@
 
 #include "memory.h"
 #include "object.h"
+#include "table.h"
 #include "value.h"
 #include "vm.h"
 
@@ -25,6 +26,8 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
   string->length = length;
   string->chars = chars;
   string->hash = hash;
+
+  table_set(&vm.strings, string, NIL_VAL);
   return string;
 }
 

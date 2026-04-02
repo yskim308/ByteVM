@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "memory.h"
 #include "object.h"
+#include "table.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -25,9 +26,16 @@ static void runtime_error(const char *format, ...) {
   reset_stack();
 }
 
-void init_VM() { reset_stack(); }
+void init_VM() {
+  reset_stack();
+  vm.objects = NULL;
+  init_table(&vm.strings);
+}
 
-void free_VM() { free_objects(); }
+void free_VM() {
+  free_table(&vm.strings);
+  free_objects();
+}
 
 void push(Value value) {
   *vm.stack_top = value;
