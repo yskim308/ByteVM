@@ -6,6 +6,7 @@
 #include "compiler.h"
 #include "object.h"
 #include "scanner.h"
+#include "table.h"
 #include "value.h"
 
 #ifdef DEBUG_PRINT_CODE
@@ -44,6 +45,8 @@ typedef struct {
 Parser parser;
 
 Chunk *compiling_chunk;
+
+Table constants_table;
 
 static Chunk *current_chunk() { return compiling_chunk; }
 
@@ -315,7 +318,18 @@ static void parse_precedence(Precedence precedence) {
 }
 
 static uint8_t identifier_constant(Token *name) {
-  return make_constant(OBJ_VAL(copy_string(name->start, name->length)));
+  ObjString *str = copy_string(name->start, name->length);
+
+  Value value;
+  if (table_get(&constants_table, str, &value)) {
+    // maybe dangerous?
+    return (uint8_t)AS_NUMBER(value);
+  }
+
+  uint8_t index = make_constant(OBJ_VAL(str));
+
+  table_set(&constants_table, str, NUMBER_VAL(index));
+  return index;
 }
 
 static uint8_t parse_variable(const char *error_msg) {
@@ -400,6 +414,7 @@ static void statement() {
 
 bool compile(const char *source, Chunk *chunk) {
   init_scanner(source);
+  init_table(&constants_table);
 
   compiling_chunk = chunk;
 
@@ -413,6 +428,7 @@ bool compile(const char *source, Chunk *chunk) {
   }
 
   consume(TOKEN_EOF, "Expect end of expression.");
+  free_table(&constants_table);
   end_compiler();
   return !parser.had_error;
 }
