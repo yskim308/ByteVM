@@ -128,6 +128,7 @@ static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Precedence precedence);
 static void statement();
 static void declaration();
+static uint8_t identifier_constant(Token *name);
 
 static void binary() {
   TokenType op_type = parser.previous.type;
@@ -215,6 +216,13 @@ static void string() {
       copy_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void named_variable(Token *name) {
+  uint8_t arg = identifier_constant(name);
+  emit_two_bytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable() { named_variable(&parser.previous); }
+
 static void unary() {
   TokenType op_type = parser.previous.type;
 
@@ -252,7 +260,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
