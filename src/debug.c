@@ -53,6 +53,8 @@ int disassemble_instruction(Chunk *chunk, int offset) {
     return simple_instruction("OP_GREATER", offset);
   case OP_LESS:
     return simple_instruction("OP_LESS", offset);
+  case OP_POP:
+    return simple_instruction("OP_POP", offset);
   // binary operands
   case OP_ADD:
     return simple_instruction("OP_ADD", offset);
