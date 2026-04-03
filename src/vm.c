@@ -164,6 +164,8 @@ static InterpretResult run() {
       push(NUMBER_VAL(-AS_NUMBER(pop())));
       break;
     }
+    case OP_RETURN:
+      return INTERPRET_OK;
     }
   }
 
