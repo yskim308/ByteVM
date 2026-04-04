@@ -138,6 +138,10 @@ static void end_compiler() {
 #endif
 }
 
+static void begin_scope() { current->scope_depth++; }
+
+static void end_scope() { current->scope_depth--; }
+
 // forward declarations
 static void expression();
 static ParseRule *get_rule(TokenType type);
@@ -364,6 +368,14 @@ static ParseRule *get_rule(TokenType type) { return &rules[type]; }
 
 static void expression() { parse_precedence(PREC_ASSIGNMENT); }
 
+static void block() {
+  while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+    declaration();
+  }
+
+  consume(TOKEN_RIGHT_BRACE, "Expect '}' after block");
+}
+
 static void var_declaration() {
   uint8_t const_idx = parse_variable("Expect variable name.");
 
@@ -426,6 +438,10 @@ static void declaration() {
 static void statement() {
   if (match(TOKEN_PRINT)) {
     print_statement();
+  } else if (match(TOKEN_LEFT_BRACE)) {
+    begin_scope();
+    block();
+    end_scope();
   } else {
     expression_statement();
   }
