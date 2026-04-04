@@ -42,7 +42,20 @@ typedef struct {
   Precedence precedence;
 } ParseRule;
 
+typedef struct {
+  Token name;
+  int depth;
+} Local;
+
+typedef struct {
+  Local locals[UINT8_MAX + 1];
+  int local_count;
+  int scope_depth;
+} Compiler;
+
 Parser parser;
+
+Compiler *current = NULL;
 
 Chunk *compiling_chunk;
 
@@ -207,6 +220,12 @@ static Byte make_constant(Value value) {
 
 static void emit_constant(Value value) {
   emit_two_bytes(OP_CONSTANT, make_constant(value));
+}
+
+static void init_compiler(Compiler *compiler) {
+  compiler->local_count = 0;
+  compiler->scope_depth = 0;
+  current = compiler;
 }
 
 static void number(bool can_assign) {
@@ -415,6 +434,7 @@ static void statement() {
 bool compile(const char *source, Chunk *chunk) {
   init_scanner(source);
   init_table(&constants_table);
+  init_compiler(current);
 
   compiling_chunk = chunk;
 
