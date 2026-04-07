@@ -523,6 +523,8 @@ static void statement() {
 bool compile(const char *source, Chunk *chunk) {
   init_scanner(source);
   init_table(&constants_table);
+
+  Compiler compiler;
   init_compiler(current);
 
   compiling_chunk = chunk;
