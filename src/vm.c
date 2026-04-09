@@ -106,6 +106,15 @@ static InterpretResult run() {
       push(constant);
       break;
     }
+    case OP_CONSTANT_LONG: {
+      Byte high = READ_BYTE();
+      Byte middle = READ_BYTE();
+      Byte low = READ_BYTE();
+
+      int idx = high << 16 | middle << 8 | low;
+      push(vm.chunk->constants.values[idx]);
+      break;
+    }
     case OP_NIL: {
       push(NIL_VAL);
       break;

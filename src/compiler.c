@@ -130,6 +130,19 @@ static void emit_two_bytes(Byte byte1, Byte byte2) {
   emit_byte(byte2);
 }
 
+static void emit_three_bytes(Byte b1, Byte b2, Byte b3) {
+  emit_byte(b1);
+  emit_byte(b2);
+  emit_byte(b3);
+}
+
+static void emit_four_bytes(Byte b1, Byte b2, Byte b3, Byte b4) {
+  emit_byte(b1);
+  emit_byte(b2);
+  emit_byte(b3);
+  emit_byte(b4);
+}
+
 static void emit_return() { emit_byte(OP_RETURN); }
 
 static void end_compiler() {
@@ -224,18 +237,27 @@ static void grouping(bool can_assign) {
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static Byte make_constant(Value value) {
+static int make_constant(Value value) {
   int constant = add_constant(current_chunk(), value);
-  if (constant > UINT8_MAX) {
-    error("Too many constants in one chunk");
-    return 0;
-  }
-
-  return (Byte)constant;
+  return constant;
 }
 
 static void emit_constant(Value value) {
-  emit_two_bytes(OP_CONSTANT, make_constant(value));
+  int const_idx = make_constant(value);
+  if (const_idx < UINT8_MAX) {
+    emit_two_bytes(OP_CONSTANT, make_constant(value));
+  } else if (const_idx < 16777215) {
+    int lower_byte_mask = 0xff;
+
+    Byte high_byte = (const_idx >> 16) & lower_byte_mask;
+    Byte middle_byte = (const_idx >> 8) & lower_byte_mask;
+    Byte low_byte = const_idx & lower_byte_mask;
+
+    emit_four_bytes(OP_CONSTANT_LONG, high_byte, middle_byte, low_byte);
+
+  } else {
+    error("Too many constants in one chunk (exceeds 3 byte limit).");
+  }
 }
 
 static void init_compiler(Compiler *compiler) {
