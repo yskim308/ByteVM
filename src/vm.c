@@ -72,6 +72,19 @@ static void concatenate() {
   push(OBJ_VAL(result));
 }
 
+static inline int read_short() {
+  Byte high = *vm.ip++;
+  Byte low = *vm.ip++;
+  return (int)((int)high << 8 | (int)low);
+}
+
+static inline int read_long() {
+  Byte high = *vm.ip++;
+  Byte middle = *vm.ip++;
+  Byte low = *vm.ip++;
+  return (int)((int)high << 16 | (int)middle << 8 | (int)low);
+}
+
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -135,13 +148,27 @@ static InterpretResult run() {
       push(vm.stack[slot]);
       break;
     }
+    case OP_GET_LOCAL_LONG: {
+      push(vm.stack[read_short()]);
+      break;
+    }
     case OP_SET_LOCAL: {
       uint8_t slot = READ_BYTE();
       vm.stack[slot] = peek(0);
       break;
     }
+    case OP_SET_LOCAL_LONG: {
+      vm.stack[read_short()] = peek(0);
+      break;
+    }
     case OP_DEFINE_GLOBAL: {
       ObjString *name = READ_STRING();
+      table_set(&vm.globals, name, peek(0));
+      pop();
+      break;
+    }
+    case OP_DEFINE_GLOBAL_LONG: {
+      ObjString *name = AS_STRING(vm.chunk->constants.values[read_long()]);
       table_set(&vm.globals, name, peek(0));
       pop();
       break;
@@ -156,8 +183,27 @@ static InterpretResult run() {
       push(value);
       break;
     }
+    case OP_GET_GLOBAL_LONG: {
+      ObjString *name = AS_STRING(vm.chunk->constants.values[read_long()]);
+      Value value;
+      if (!table_get(&vm.globals, name, &value)) {
+        runtime_error("Undefined variable '%s'.", name->chars);
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      push(value);
+      break;
+    }
     case OP_SET_GLOBAL: {
       ObjString *name = READ_STRING();
+      if (table_set(&vm.globals, name, peek(0))) {
+        table_delete(&vm.globals, name);
+        runtime_error("Undefined variable: '%s'", name->chars);
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      break;
+    }
+    case OP_SET_GLOBAL_LONG: {
+      ObjString *name = AS_STRING(vm.chunk->constants.values[read_long()]);
       if (table_set(&vm.globals, name, peek(0))) {
         table_delete(&vm.globals, name);
         runtime_error("Undefined variable: '%s'", name->chars);
