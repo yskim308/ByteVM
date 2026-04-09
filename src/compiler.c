@@ -51,7 +51,7 @@ typedef struct {
 } Local;
 
 typedef struct {
-  Local locals[UINT8_MAX + 1];
+  Local locals[UINT16_MAX + 1];
   int local_count;
   int scope_depth;
 } Compiler;
@@ -63,6 +63,8 @@ Compiler *current = NULL;
 Chunk *compiling_chunk;
 
 Table constants_table;
+
+const int UINT24_MAX = 16777215;
 
 static Chunk *current_chunk() { return compiling_chunk; }
 
@@ -143,6 +145,37 @@ static void emit_four_bytes(Byte b1, Byte b2, Byte b3, Byte b4) {
   emit_byte(b4);
 }
 
+static void emit_global_with_index(Byte op, Byte op_long, int index) {
+  if (index <= UINT8_MAX) {
+    emit_two_bytes(op, (Byte)index);
+  } else if (index <= UINT24_MAX) {
+    int lower_byte_mask = 0xff;
+
+    Byte high_byte = (index >> 16) & lower_byte_mask;
+    Byte middle_byte = (index >> 8) & lower_byte_mask;
+    Byte low_byte = index & lower_byte_mask;
+
+    emit_four_bytes(op_long, high_byte, middle_byte, low_byte);
+  } else {
+    error("Too many constants in chunk (> 3 bytes).");
+  }
+}
+
+static void emit_local_with_index(Byte op, Byte op_long, int index) {
+  if (index <= UINT8_MAX) {
+    emit_two_bytes(op, (Byte)index);
+  } else if (index <= UINT16_MAX) {
+    int lower_byte_mask = 0xff;
+
+    Byte high_byte = (index >> 8) & lower_byte_mask;
+    Byte low_byte = index & lower_byte_mask;
+
+    emit_three_bytes(op_long, high_byte, low_byte);
+  } else {
+    error("Too many locals (> 2 bytes).");
+  }
+}
+
 static void emit_return() { emit_byte(OP_RETURN); }
 
 static void end_compiler() {
@@ -172,7 +205,7 @@ static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Precedence precedence);
 static void statement();
 static void declaration();
-static uint8_t identifier_constant(Token *name);
+static int identifier_constant(Token *name);
 static int resolve_local(Compiler *compiler, Token *name);
 
 static void binary(bool can_assign) {
@@ -244,20 +277,7 @@ static int make_constant(Value value) {
 
 static void emit_constant(Value value) {
   int const_idx = make_constant(value);
-  if (const_idx < UINT8_MAX) {
-    emit_two_bytes(OP_CONSTANT, make_constant(value));
-  } else if (const_idx < 16777215) {
-    int lower_byte_mask = 0xff;
-
-    Byte high_byte = (const_idx >> 16) & lower_byte_mask;
-    Byte middle_byte = (const_idx >> 8) & lower_byte_mask;
-    Byte low_byte = const_idx & lower_byte_mask;
-
-    emit_four_bytes(OP_CONSTANT_LONG, high_byte, middle_byte, low_byte);
-
-  } else {
-    error("Too many constants in one chunk (exceeds 3 byte limit).");
-  }
+  emit_global_with_index(OP_CONSTANT, OP_CONSTANT_LONG, const_idx);
 }
 
 static void init_compiler(Compiler *compiler) {
@@ -279,15 +299,12 @@ static void string(bool can_assign) {
 static void named_variable(Token name, bool can_assign) {
   uint8_t get_op, set_op;
   int arg = resolve_local(current, &name);
+
   bool is_local = false;
-  if (arg != -1) {
-    get_op = OP_GET_LOCAL;
-    set_op = OP_SET_LOCAL;
-    is_local = true;
-  } else {
+  if (arg == -1) {
     arg = identifier_constant(&name);
-    get_op = OP_GET_GLOBAL;
-    set_op = OP_SET_GLOBAL;
+  } else {
+    is_local = true;
   }
 
   if (can_assign && match(TOKEN_EQUAL)) {
@@ -295,9 +312,17 @@ static void named_variable(Token name, bool can_assign) {
       error("Cannot reassign const variable");
     }
     expression();
-    emit_two_bytes(set_op, arg);
+    if (is_local) {
+      emit_local_with_index(OP_SET_LOCAL, OP_SET_LOCAL_LONG, arg);
+    } else {
+      emit_global_with_index(OP_SET_GLOBAL, OP_SET_GLOBAL_LONG, arg);
+    }
   } else {
-    emit_two_bytes(get_op, arg);
+    if (is_local) {
+      emit_local_with_index(OP_GET_LOCAL, OP_GET_LOCAL_LONG, arg);
+    } else {
+      emit_global_with_index(OP_GET_GLOBAL, OP_GET_GLOBAL_LONG, arg);
+    }
   }
 }
 
@@ -388,7 +413,7 @@ static void parse_precedence(Precedence precedence) {
   }
 }
 
-static uint8_t identifier_constant(Token *name) {
+static int identifier_constant(Token *name) {
   ObjString *str = copy_string(name->start, name->length);
 
   Value value;
@@ -471,6 +496,7 @@ static void define_variable(uint8_t idx) {
     return;
   }
   emit_two_bytes(OP_DEFINE_GLOBAL, idx);
+  emit_global_with_index(OP_DEFINE_GLOBAL, OP_DEFINE_GLOBAL_LONG, idx);
 }
 
 static ParseRule *get_rule(TokenType type) { return &rules[type]; }
