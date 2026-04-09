@@ -47,6 +47,7 @@ typedef struct {
 typedef struct {
   Token name;
   int depth;
+  bool is_const;
 } Local;
 
 typedef struct {
@@ -256,9 +257,11 @@ static void string(bool can_assign) {
 static void named_variable(Token name, bool can_assign) {
   uint8_t get_op, set_op;
   int arg = resolve_local(current, &name);
+  bool is_local = false;
   if (arg != -1) {
     get_op = OP_GET_LOCAL;
     set_op = OP_SET_LOCAL;
+    is_local = true;
   } else {
     arg = identifier_constant(&name);
     get_op = OP_GET_GLOBAL;
@@ -266,6 +269,9 @@ static void named_variable(Token name, bool can_assign) {
   }
 
   if (can_assign && match(TOKEN_EQUAL)) {
+    if (is_local && current->locals[arg].is_const) {
+      error("Cannot reassign const variable");
+    }
     expression();
     emit_two_bytes(set_op, arg);
   } else {
@@ -457,17 +463,27 @@ static void block() {
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block");
 }
 
-static void var_declaration() {
+static void var_declaration(bool is_const) {
+  if (is_const && current->scope_depth == 0) {
+    error("Cannot declare 'const' in global scope.");
+  }
+
   uint8_t const_idx = parse_variable("Expect variable name.");
 
   if (match(TOKEN_EQUAL)) {
     expression();
   } else {
+    if (is_const) {
+      error("'const' variables must be declared with initializer");
+    }
     emit_byte(OP_NIL);
   }
   consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
 
   define_variable(const_idx);
+  if (current->scope_depth > 0) {
+    current->locals[current->local_count - 1].is_const = is_const;
+  }
 }
 
 static void expression_statement() {
@@ -507,7 +523,9 @@ static void synchronize() {
 
 static void declaration() {
   if (match(TOKEN_VAR)) {
-    var_declaration();
+    var_declaration(false);
+  } else if (match(TOKEN_CONST)) {
+    var_declaration(true);
   } else {
     statement();
   }
