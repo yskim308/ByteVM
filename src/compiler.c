@@ -56,7 +56,8 @@ typedef enum {
   TYPE_SCRIPT,
 } FunctionType;
 
-typedef struct {
+typedef struct Compiler {
+  struct Compiler *enclosing;
   ObjFunction *function;
   FunctionType type;
 
@@ -225,6 +226,7 @@ static ObjFunction *end_compiler() {
   }
 #endif
 
+  current = current->enclosing;
   return function;
 }
 
@@ -322,6 +324,7 @@ static void emit_constant(Value value) {
 }
 
 static void init_compiler(Compiler *compiler, FunctionType type) {
+  compiler->enclosing = current;
   compiler->function = NULL;
   compiler->type = type;
 
@@ -329,6 +332,10 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
   compiler->scope_depth = 0;
   compiler->function = new_function();
   current = compiler;
+  if (type != TYPE_SCRIPT) {
+    current->function->name =
+        copy_string(parser.previous.start, parser.previous.length);
+  }
 
   Local *local = &current->locals[current->local_count++];
   local->depth = 0;
@@ -558,6 +565,8 @@ static uint8_t parse_variable(const char *error_msg) {
 }
 
 static void mark_initialized() {
+  if (current->scope_depth >= 0)
+    return;
   current->locals[current->local_count - 1].depth = current->scope_depth;
 }
 
@@ -580,6 +589,36 @@ static void block() {
   }
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block");
+}
+
+static void function(FunctionType type) {
+  Compiler compiler;
+  init_compiler(&compiler, type);
+  begin_scope();
+
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+  do {
+    current->function->arity++;
+    if (current->function->arity > 255) {
+      error_at_current("cannot have more than 255 parametesr");
+    }
+    Byte constant = parse_variable("Expected parameter name.");
+    define_variable(constant);
+  } while (match(TOKEN_COMMA));
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after function parameters.");
+  consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+
+  block();
+
+  ObjFunction *function = end_compiler();
+  emit_two_bytes(OP_CONSTANT, make_constant(OBJ_VAL(function)));
+}
+
+static void fun_declaration() {
+  Byte global = parse_variable("Expect function name.");
+  mark_initialized();
+  function(TYPE_FUNCTION);
+  define_variable(global);
 }
 
 static void var_declaration(bool is_const) {
@@ -718,7 +757,9 @@ static void synchronize() {
 }
 
 static void declaration() {
-  if (match(TOKEN_VAR)) {
+  if (match(TOKEN_FUN)) {
+    fun_declaration();
+  } else if (match(TOKEN_VAR)) {
     var_declaration(false);
   } else if (match(TOKEN_CONST)) {
     var_declaration(true);
