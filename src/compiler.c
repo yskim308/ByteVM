@@ -176,6 +176,17 @@ static void emit_local_with_index(Byte op, Byte op_long, int index) {
   }
 }
 
+static void emit_loop(int loop_start) {
+  emit_byte(OP_LOOP);
+
+  int offset = current_chunk()->count - loop_start + 2;
+  if (offset > UINT16_MAX)
+    error("Loop body too large");
+
+  emit_byte(offset >> 8 & 0xff);
+  emit_byte(offset & 0xff);
+}
+
 static int emit_jump(Byte instruction) {
   emit_three_bytes(instruction, 0xff, 0xff);
   return current_chunk()->count - 2;
@@ -600,6 +611,22 @@ static void print_statement() {
   emit_byte(OP_PRINT);
 }
 
+static void while_statement() {
+  int loop_start = current_chunk()->count;
+
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
+
+  int exit_loop = emit_jump(OP_JUMP_IF_FALSE);
+  emit_byte(OP_POP);
+  statement();
+  emit_loop(loop_start);
+
+  patch_jump(exit_loop);
+  emit_byte(OP_POP);
+}
+
 static void synchronize() {
   parser.panic_mode = false;
 
@@ -639,6 +666,8 @@ static void declaration() {
 static void statement() {
   if (match(TOKEN_PRINT)) {
     print_statement();
+  } else if (match(TOKEN_WHILE)) {
+    while_statement();
   } else if (match(TOKEN_IF)) {
     if_statement();
   } else if (match(TOKEN_LEFT_BRACE)) {
