@@ -51,7 +51,15 @@ typedef struct {
   bool is_const;
 } Local;
 
+typedef enum {
+  TYPE_FUNCTION,
+  TYPE_SCRIPT,
+} FunctionType;
+
 typedef struct {
+  ObjFunction* function;
+  FunctionType type;
+
   Local locals[UINT16_MAX + 1];
   int local_count;
   int scope_depth;
@@ -67,7 +75,9 @@ Table constants_table;
 
 const int UINT24_MAX = 16777215;
 
-static Chunk *current_chunk() { return compiling_chunk; }
+static Chunk *current_chunk() {
+  return &current->function->chunk;
+}
 
 static void error_at(Token *token, const char *message) {
   if (parser.panic_mode)
