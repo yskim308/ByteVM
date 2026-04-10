@@ -748,14 +748,12 @@ static void statement() {
   }
 }
 
-ObjFunction *compile(const char *source, Chunk *chunk) {
+ObjFunction *compile(const char *source) {
   init_scanner(source);
   init_table(&constants_table);
 
   Compiler compiler;
-  init_compiler(current, TYPE_SCRIPT);
-
-  compiling_chunk = chunk;
+  init_compiler(&compiler, TYPE_SCRIPT);
 
   parser.had_error = false;
   parser.panic_mode = false;
@@ -768,7 +766,6 @@ ObjFunction *compile(const char *source, Chunk *chunk) {
 
   consume(TOKEN_EOF, "Expect end of expression.");
   free_table(&constants_table);
-  end_compiler();
 
   ObjFunction *function = end_compiler();
   return parser.had_error ? NULL : function;
