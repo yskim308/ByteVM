@@ -176,6 +176,22 @@ static void emit_local_with_index(Byte op, Byte op_long, int index) {
   }
 }
 
+static int emit_jump(Byte instruction) {
+  emit_three_bytes(instruction, 0xff, 0xff);
+  return current_chunk()->count - 2;
+}
+
+static void patch_jump(int offset) {
+  int jump = current_chunk()->count - offset;
+
+  if (jump > UINT16_MAX) {
+    error("Too much code to jump over.");
+  }
+
+  current_chunk()->code[offset] = (jump >> 8) & 0xff;
+  current_chunk()->code[offset] = jump & 0xff;
+}
+
 static void emit_return() { emit_byte(OP_RETURN); }
 
 static void end_compiler() {
@@ -540,6 +556,16 @@ static void expression_statement() {
   emit_byte(OP_POP);
 }
 
+static void if_statement() {
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after if.");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+
+  int then_jump = emit_jump(OP_JUMP_IF_FALSE);
+  statement();
+  patch_jump(then_jump);
+}
+
 static void print_statement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value");
@@ -585,6 +611,8 @@ static void declaration() {
 static void statement() {
   if (match(TOKEN_PRINT)) {
     print_statement();
+  } else if (match(TOKEN_IF)) {
+    if_statement();
   } else if (match(TOKEN_LEFT_BRACE)) {
     begin_scope();
     block();
