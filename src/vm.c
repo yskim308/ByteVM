@@ -261,6 +261,12 @@ static InterpretResult run() {
       push(NUMBER_VAL(-AS_NUMBER(pop())));
       break;
     }
+    case OP_JUMP_IF_FALSE: {
+      uint16_t offset = read_short();
+      if (is_falsey(peek(0)))
+        vm.ip += offset;
+      break;
+    }
     case OP_RETURN:
       return INTERPRET_OK;
     }
