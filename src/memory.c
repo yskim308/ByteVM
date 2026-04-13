@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "memory.h"
 #include "chunk.h"
+#include "memory.h"
 #include "object.h"
 #include "vm.h"
 
@@ -28,9 +28,13 @@ void free_object(Obj *object) {
     break;
   }
   case OBJ_FUNCTION: {
-    ObjFunction *function = (ObjFunction*)object;
+    ObjFunction *function = (ObjFunction *)object;
     free_chunk(&function->chunk);
     FREE(ObjFunction, object);
+    break;
+  }
+  case OBJ_NATIVE: {
+    FREE(ObjNative, object);
     break;
   }
   }

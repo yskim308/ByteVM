@@ -42,6 +42,14 @@ static void runtime_error(const char *format, ...) {
   reset_stack();
 }
 
+static void define_native(const char *name, NativeFn function) {
+  push(OBJ_VAL(copy_string(name, (int)strlen(name))));
+  push(OBJ_VAL(new_native(function)));
+  table_set(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+  pop();
+  pop();
+}
+
 void init_VM() {
   reset_stack();
   vm.objects = NULL;
@@ -90,8 +98,13 @@ static bool call_value(Value callee, int arg_count) {
     switch (OBJ_TYPE(callee)) {
     case OBJ_FUNCTION:
       return call(AS_FUNCTION(callee), arg_count);
-    default:
-      break;
+    case OBJ_NATIVE: {
+      NativeFn native = AS_NATIVE(callee);
+      Value result = native(arg_count, vm.stack_top - arg_count);
+      vm.stack_top -= arg_count;
+      push(result);
+      return true;
+    }
     }
   }
   runtime_error("Can only call functions and classses.");
