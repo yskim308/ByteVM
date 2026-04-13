@@ -2,6 +2,7 @@
 #include "chunk.h"
 #include "compiler.h"
 #include "debug.h"
+#include "line.h"
 #include "memory.h"
 #include "object.h"
 #include "table.h"
@@ -26,10 +27,18 @@ static void runtime_error(const char *format, ...) {
   va_end(args);
   fputs("\n", stderr);
 
-  CallFrame *frame = &vm.frames[vm.frame_count - 1];
-  size_t instruction = frame->ip - frame->function->chunk.code - 1;
-  int line = get_line(&frame->function->chunk.lines, instruction);
-  fprintf(stderr, "[line %d] in script \n", line);
+  for (int i = vm.frame_count - 1; i >= 0; i--) {
+    CallFrame *frame = &vm.frames[i];
+    ObjFunction *function = frame->function;
+    size_t instruction = frame->ip - function->chunk.code - 1;
+    fprintf(stderr, "[line %d] in ",
+            get_line(&function->chunk.lines, instruction));
+    if (function->name == NULL) {
+      fprintf(stderr, "script\n");
+    } else {
+      fprintf(stderr, "%s()\n", function->name->chars);
+    }
+  }
   reset_stack();
 }
 
@@ -59,6 +68,16 @@ Value pop() {
 static Value peek(int distance) { return vm.stack_top[-1 - distance]; }
 
 static bool call(ObjFunction *function, int arg_count) {
+  if (arg_count != function->arity) {
+    runtime_error("Expected %d arguments but got %d.", function->arity,
+                  arg_count);
+    return false;
+  }
+
+  if (vm.frame_count == FRAMES_MAX) {
+    runtime_error("Stack overflow.");
+    return false;
+  }
   CallFrame *frame = &vm.frames[vm.frame_count++];
   frame->function = function;
   frame->ip = function->chunk.code;
