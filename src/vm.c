@@ -12,8 +12,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 VM vm;
+
+static Value clock_native(int arg_count, Value *args) {
+  return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
 
 static void reset_stack() {
   vm.stack_top = vm.stack;
