@@ -292,6 +292,26 @@ static void binary(bool can_assign) {
   }
 }
 
+static Byte argument_list() {
+  Byte arg_count = 0;
+  if (!check(TOKEN_RIGHT_PAREN)) {
+    do {
+      expression();
+      if (arg_count == 255) {
+        error("Cannot have more than 255 arguments to function");
+      }
+      arg_count++;
+    } while (match(TOKEN_COMMA));
+  }
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+  return arg_count;
+}
+
+static void call(bool can_assign) {
+  Byte arg_count = argument_list();
+  emit_two_bytes(OP_CALL, arg_count);
+}
+
 static void literal(bool can_assign) {
   switch (parser.previous.type) {
   case TOKEN_FALSE:
@@ -426,7 +446,7 @@ static void or_(bool can_assign) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
+    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_NONE},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},

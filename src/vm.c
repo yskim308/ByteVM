@@ -58,6 +58,27 @@ Value pop() {
 
 static Value peek(int distance) { return vm.stack_top[-1 - distance]; }
 
+static bool call(ObjFunction *function, int arg_count) {
+  CallFrame *frame = &vm.frames[vm.frame_count++];
+  frame->function = function;
+  frame->ip = function->chunk.code;
+  frame->slots = vm.stack_top - arg_count - 1;
+  return true;
+}
+
+static bool call_value(Value callee, int arg_count) {
+  if (IS_OBJ(callee)) {
+    switch (OBJ_TYPE(callee)) {
+    case OBJ_FUNCTION:
+      return call(AS_FUNCTION(callee), arg_count);
+    default:
+      break;
+    }
+  }
+  runtime_error("Can only call functions and classses.");
+  return false;
+}
+
 static bool is_falsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -276,6 +297,14 @@ static InterpretResult run() {
       frame->ip -= offset;
       break;
     }
+    case OP_CALL: {
+      int arg_count = READ_BYTE();
+      if (!call_value(peek(arg_count), arg_count)) {
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      frame = &vm.frames[vm.frame_count - 1];
+      break;
+    }
     case OP_RETURN:
       return INTERPRET_OK;
     }
@@ -293,6 +322,7 @@ InterpretResult interpret(const char *source) {
     return INTERPRET_COMPILE_ERROR;
 
   push(OBJ_VAL(function));
+  call(function, 0);
   CallFrame *frame = &vm.frames[vm.frame_count++];
   frame->function = function;
   frame->ip = function->chunk.code;
