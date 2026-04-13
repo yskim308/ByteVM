@@ -213,7 +213,10 @@ static void patch_jump(int offset) {
   current_chunk()->code[offset] = jump & 0xff;
 }
 
-static void emit_return() { emit_byte(OP_RETURN); }
+static void emit_return() {
+  emit_byte(OP_NIL);
+  emit_byte(OP_RETURN);
+}
 
 static ObjFunction *end_compiler() {
   emit_return();
