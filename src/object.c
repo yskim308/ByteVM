@@ -23,8 +23,15 @@ static Obj *allocate_object(size_t size, ObjType type) {
 }
 
 ObjClosure *new_closure(ObjFunction *function) {
+  ObjUpValue **upvalues = ALLOCATE(ObjUpValue *, function->upvalue_count);
+  for (int i = 0; i < function->upvalue_count; ++i) {
+    upvalues[i] = NULL;
+  }
+
   ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
   closure->function = function;
+  closure->upvalue_count = function->upvalue_count;
+  closure->upvalues = upvalues;
   return closure;
 }
 

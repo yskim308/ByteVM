@@ -269,7 +269,7 @@ static int add_up_value(Compiler *compiler, Byte index, bool is_local) {
     }
   }
 
-  if (up_value_count > UINT8_MAX - 1) {
+  if (upvalue_count > UINT8_MAX - 1) {
     error("Too many closure variables in function");
     return 0;
   }
@@ -284,12 +284,12 @@ static int resolve_upvalue(Compiler *compiler, Token *name) {
     return -1;
   }
 
-  int local = resolve_local(compiler, name);
+  int local = resolve_local(compiler->enclosing, name);
   if (local != -1) {
     return add_up_value(compiler, (Byte)local, true);
   }
 
-  int up_value = resolve_upvalue(compiler, name);
+  int up_value = resolve_upvalue(compiler->enclosing, name);
   if (up_value != -1) {
     return add_up_value(compiler, (Byte)local, false);
   }

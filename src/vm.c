@@ -127,6 +127,11 @@ static bool call_value(Value callee, int arg_count) {
   return false;
 }
 
+static ObjUpValue *capture_upvalue(Value *local) {
+  ObjUpValue *created_upvalue = new_upvalue(local);
+  return created_upvalue;
+}
+
 static bool is_falsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -358,10 +363,29 @@ static InterpretResult run() {
       ip = frame->ip;
       break;
     }
+    case OP_GET_UPVALUE: {
+      Byte slot = READ_BYTE();
+      push(*frame->closure->upvalues[slot]->location);
+      break;
+    }
+    case OP_SET_UPVALUE: {
+      Byte slot = READ_BYTE();
+      *frame->closure->upvalues[slot]->location = peek(0);
+      break;
+    }
     case OP_CLOSURE: {
       ObjFunction *function = AS_FUNCTION(READ_CONSTANT());
       ObjClosure *closure = new_closure(function);
       push(OBJ_VAL(closure));
+      for (int i = 0; i < closure->upvalue_count; ++i) {
+        Byte is_local = READ_BYTE();
+        Byte index = READ_BYTE();
+        if (is_local) {
+          closure->upvalues[i] = capture_upvalue(frame->slots + index);
+        } else {
+          closure->upvalues[i] = frame->closure->upvalues[index];
+        }
+      }
       break;
     }
     case OP_RETURN: {
