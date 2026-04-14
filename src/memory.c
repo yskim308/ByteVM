@@ -37,6 +37,10 @@ void free_object(Obj *object) {
     FREE(ObjNative, object);
     break;
   }
+  case OBJ_CLOSURE: {
+    FREE(ObjClosure, object);
+    break;
+  }
   }
 }
 
