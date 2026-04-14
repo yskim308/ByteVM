@@ -9,6 +9,7 @@ typedef enum {
   OP_RETURN,
   OP_CONSTANT,
   OP_CONSTANT_LONG,
+  OP_CLOSURE,
   OP_NIL,
   OP_TRUE,
   OP_FALSE,
