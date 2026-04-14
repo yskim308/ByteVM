@@ -88,6 +88,12 @@ ObjString *copy_string(const char *chars, int length) {
   return allocate_string(heap_chars, length, hash);
 }
 
+ObjUpValue *new_upvalue(Value *slot) {
+  ObjUpValue *upvalue = ALLOCATE_OBJ(ObjUpValue, OBJ_UPVALUE);
+  upvalue->location = slot;
+  return upvalue;
+}
+
 static void print_function(ObjFunction *function) {
   if (function->name == NULL) {
     printf("<script>\n");
@@ -100,6 +106,9 @@ void print_object(Value value) {
   switch (OBJ_TYPE(value)) {
   case OBJ_STRING:
     printf("%s", AS_CSTRING(value));
+    break;
+  case OBJ_UPVALUE:
+    printf("upvalue");
     break;
   case OBJ_FUNCTION:
     print_function(AS_FUNCTION(value));

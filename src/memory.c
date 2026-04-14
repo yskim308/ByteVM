@@ -21,6 +21,9 @@ void *reallocate(void *pointer, size_t old_size, size_t new_size) {
 
 void free_object(Obj *object) {
   switch (object->type) {
+  case OBJ_UPVALUE:
+    FREE(ObjUpValue, object);
+    break;
   case OBJ_STRING: {
     ObjString *string = (ObjString *)object;
     FREE_ARRAY(char, string->chars, string->length + 1);
