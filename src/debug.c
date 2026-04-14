@@ -3,6 +3,7 @@
 #include "chunk.h"
 #include "common.h"
 #include "debug.h"
+#include "object.h"
 #include "value.h"
 
 void disassemble_chunk(Chunk *chunk, const char *name) {
@@ -80,8 +81,20 @@ int disassemble_instruction(Chunk *chunk, int offset) {
     printf("%-16s %4d ", "OP_CLOSURE", constant);
     print_value(chunk->constants.values[constant]);
     printf("\n");
+
+    ObjFunction *function = AS_FUNCTION(chunk->constants.values[constant]);
+    for (int j = 0; j < function->up_value_count; j++) {
+      int isLocal = chunk->code[offset++];
+      int index = chunk->code[offset++];
+      printf("%04d      |                     %s %d\n", offset - 2,
+             isLocal ? "local" : "upvalue", index);
+    }
     return offset;
   }
+  case OP_GET_UPVALUE:
+    return byte_instruction("OP_GET_UPVALUE", chunk, offset);
+  case OP_SET_UPVALUE:
+    return byte_instruction("OP_SET_UPVALUE", chunk, offset);
   case OP_GET_LOCAL:
     return byte_instruction("OP_GET_LOCAL", chunk, offset);
   case OP_GET_LOCAL_LONG:
