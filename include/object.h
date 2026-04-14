@@ -16,6 +16,7 @@
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
 #define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value))->function)
+#define AS_NATIVE_OBJ(value) ((ObjNative *)AS_OBJ(value))
 
 typedef enum {
   OBJ_STRING,
@@ -40,6 +41,7 @@ typedef Value (*NativeFn)(int arg_count, Value *args);
 typedef struct {
   Obj obj;
   NativeFn function;
+  int arity;
 } ObjNative;
 
 struct ObjString {
@@ -50,7 +52,7 @@ struct ObjString {
 };
 
 ObjFunction *new_function();
-ObjNative *new_native(NativeFn function);
+ObjNative *new_native(NativeFn function, int arity);
 ObjString *take_string(char *chars, int length);
 ObjString *copy_string(const char *chars, int length);
 
