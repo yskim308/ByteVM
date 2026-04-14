@@ -66,7 +66,7 @@ int disassemble_instruction(Chunk *chunk, int offset) {
   if (offset > 0 && current_line == get_line(&chunk->lines, offset - 1)) {
     printf("  | ");
   } else {
-    printf("%4d ", chunk->lines.entries[offset].line);
+    printf("%4d ", current_line);
   }
 
   uint8_t instruction = chunk->code[offset];
@@ -129,7 +129,7 @@ int disassemble_instruction(Chunk *chunk, int offset) {
   case OP_JUMP:
     return jump_instruction("OP_JUMP", 1, chunk, offset);
   case OP_LOOP:
-    return jump_instruction("OP_LOOP", 1, chunk, offset);
+    return jump_instruction("OP_LOOP", -1, chunk, offset);
   // unary and return
   case OP_NEGATE:
     return simple_instruction("OP_NEGATE", offset);

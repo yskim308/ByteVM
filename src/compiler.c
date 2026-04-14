@@ -8,7 +8,6 @@
 #include "compiler.h"
 #include "object.h"
 #include "scanner.h"
-#include "table.h"
 #include "value.h"
 #include "vm.h"
 
@@ -71,8 +70,6 @@ Parser parser;
 Compiler *current = NULL;
 
 Chunk *compiling_chunk;
-
-Table constants_table;
 
 const int UINT24_MAX = 16777215;
 
@@ -203,14 +200,16 @@ static int emit_jump(Byte instruction) {
 }
 
 static void patch_jump(int offset) {
-  int jump = current_chunk()->count - offset;
+  // `offset` points at the first operand byte. The encoded jump distance
+  // starts after the two-byte operand, so subtract those bytes back out.
+  int jump = current_chunk()->count - offset - 2;
 
   if (jump > UINT16_MAX) {
     error("Too much code to jump over.");
   }
 
   current_chunk()->code[offset] = (jump >> 8) & 0xff;
-  current_chunk()->code[offset] = jump & 0xff;
+  current_chunk()->code[offset + 1] = jump & 0xff;
 }
 
 static void emit_return() {
@@ -449,7 +448,7 @@ static void or_(bool can_assign) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_NONE},
+    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
@@ -515,18 +514,7 @@ static void parse_precedence(Precedence precedence) {
 }
 
 static int identifier_constant(Token *name) {
-  ObjString *str = copy_string(name->start, name->length);
-
-  Value value;
-  if (table_get(&constants_table, str, &value)) {
-    // maybe dangerous?
-    return (uint8_t)AS_NUMBER(value);
-  }
-
-  uint8_t index = make_constant(OBJ_VAL(str));
-
-  table_set(&constants_table, str, NUMBER_VAL(index));
-  return index;
+  return make_constant(OBJ_VAL(copy_string(name->start, name->length)));
 }
 
 static bool identifiers_equal(Token *a, Token *b) {
@@ -577,7 +565,7 @@ static void declare_variable() {
   add_local(*name);
 }
 
-static uint8_t parse_variable(const char *error_msg) {
+static int parse_variable(const char *error_msg) {
   consume(TOKEN_IDENTIFIER, error_msg);
 
   declare_variable();
@@ -588,17 +576,16 @@ static uint8_t parse_variable(const char *error_msg) {
 }
 
 static void mark_initialized() {
-  if (current->scope_depth >= 0)
+  if (current->scope_depth == 0)
     return;
   current->locals[current->local_count - 1].depth = current->scope_depth;
 }
 
-static void define_variable(uint8_t idx) {
+static void define_variable(int idx) {
   if (current->scope_depth > 0) {
     mark_initialized();
     return;
   }
-  emit_two_bytes(OP_DEFINE_GLOBAL, idx);
   emit_global_with_index(OP_DEFINE_GLOBAL, OP_DEFINE_GLOBAL_LONG, idx);
 }
 
@@ -625,7 +612,7 @@ static void function(FunctionType type) {
     if (current->function->arity > 255) {
       error_at_current("cannot have more than 255 parametesr");
     }
-    Byte constant = parse_variable("Expected parameter name.");
+    int constant = parse_variable("Expected parameter name.");
     define_variable(constant);
   } while (match(TOKEN_COMMA));
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after function parameters.");
@@ -638,7 +625,7 @@ static void function(FunctionType type) {
 }
 
 static void fun_declaration() {
-  Byte global = parse_variable("Expect function name.");
+  int global = parse_variable("Expect function name.");
   mark_initialized();
   function(TYPE_FUNCTION);
   define_variable(global);
@@ -649,7 +636,7 @@ static void var_declaration(bool is_const) {
     error("Cannot declare 'const' in global scope.");
   }
 
-  uint8_t const_idx = parse_variable("Expect variable name.");
+  int const_idx = parse_variable("Expect variable name.");
 
   if (match(TOKEN_EQUAL)) {
     expression();
@@ -830,7 +817,6 @@ static void statement() {
 
 ObjFunction *compile(const char *source) {
   init_scanner(source);
-  init_table(&constants_table);
 
   Compiler compiler;
   init_compiler(&compiler, TYPE_SCRIPT);
@@ -845,7 +831,6 @@ ObjFunction *compile(const char *source) {
   }
 
   consume(TOKEN_EOF, "Expect end of expression.");
-  free_table(&constants_table);
 
   ObjFunction *function = end_compiler();
   return parser.had_error ? NULL : function;

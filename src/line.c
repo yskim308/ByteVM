@@ -8,8 +8,8 @@ void init_line_array(LineArray *array) {
 }
 
 void write_to_line_array(LineArray *array, int line) {
-  if (array->entries != NULL && array->entries[array->count].line == line) {
-    array->entries[array->count].count += 1;
+  if (array->count > 0 && array->entries[array->count - 1].line == line) {
+    array->entries[array->count - 1].count += 1;
     return;
   }
 
@@ -30,6 +30,7 @@ void write_to_line_array(LineArray *array, int line) {
 
 void free_line_array(LineArray *array) {
   FREE_ARRAY(LineEntry, array->entries, array->count);
+  init_line_array(array);
 }
 
 int get_line(LineArray *array, int idx) {

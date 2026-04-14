@@ -60,6 +60,8 @@ void init_VM() {
   vm.objects = NULL;
   init_table(&vm.strings);
   init_table(&vm.globals);
+
+  define_native("clock", clock_native);
 }
 
 void free_VM() {
@@ -106,10 +108,12 @@ static bool call_value(Value callee, int arg_count) {
     case OBJ_NATIVE: {
       NativeFn native = AS_NATIVE(callee);
       Value result = native(arg_count, vm.stack_top - arg_count);
-      vm.stack_top -= arg_count;
+      vm.stack_top -= arg_count + 1;
       push(result);
       return true;
     }
+    default:
+      break;
     }
   }
   runtime_error("Can only call functions and classses.");
@@ -182,7 +186,7 @@ static InterpretResult run() {
       Byte low = READ_BYTE();
 
       int idx = high << 16 | middle << 8 | low;
-      push(vm.chunk->constants.values[idx]);
+      push(frame->function->chunk.constants.values[idx]);
       break;
     }
     case OP_NIL: {
@@ -225,7 +229,8 @@ static InterpretResult run() {
       break;
     }
     case OP_DEFINE_GLOBAL_LONG: {
-      ObjString *name = AS_STRING(vm.chunk->constants.values[READ_LONG()]);
+      ObjString *name =
+          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
       table_set(&vm.globals, name, peek(0));
       pop();
       break;
@@ -241,7 +246,8 @@ static InterpretResult run() {
       break;
     }
     case OP_GET_GLOBAL_LONG: {
-      ObjString *name = AS_STRING(vm.chunk->constants.values[READ_LONG()]);
+      ObjString *name =
+          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
       Value value;
       if (!table_get(&vm.globals, name, &value)) {
         runtime_error("Undefined variable '%s'.", name->chars);
@@ -260,7 +266,8 @@ static InterpretResult run() {
       break;
     }
     case OP_SET_GLOBAL_LONG: {
-      ObjString *name = AS_STRING(vm.chunk->constants.values[READ_LONG()]);
+      ObjString *name =
+          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
       if (table_set(&vm.globals, name, peek(0))) {
         table_delete(&vm.globals, name);
         runtime_error("Undefined variable: '%s'", name->chars);
@@ -370,10 +377,6 @@ InterpretResult interpret(const char *source) {
 
   push(OBJ_VAL(function));
   call(function, 0);
-  CallFrame *frame = &vm.frames[vm.frame_count++];
-  frame->function = function;
-  frame->ip = function->chunk.code;
-  frame->slots = vm.stack;
 
   return run();
 }
