@@ -5,6 +5,7 @@ target("clox")
 set_kind("binary")
 add_files("src/*.c")
 add_includedirs("include")
+set_rundir("$(projectdir)")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
