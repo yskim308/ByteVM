@@ -23,13 +23,16 @@ static Obj *allocate_object(size_t size, ObjType type) {
 }
 
 ObjClosure *new_closure(ObjFunction *function) {
-  ObjClosure closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+  ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+  closure->function = function;
+  return closure;
 }
 
 ObjFunction *new_function() {
   ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
   function->arity = 0;
   function->name = NULL;
+  function->up_value_count = 0;
   init_chunk(&function->chunk);
   return function;
 }

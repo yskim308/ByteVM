@@ -193,7 +193,7 @@ static InterpretResult run() {
       Byte low = READ_BYTE();
 
       int idx = high << 16 | middle << 8 | low;
-      push(frame->function->chunk.constants.values[idx]);
+      push(frame->closure->function->chunk.constants.values[idx]);
       break;
     }
     case OP_NIL: {
@@ -236,8 +236,8 @@ static InterpretResult run() {
       break;
     }
     case OP_DEFINE_GLOBAL_LONG: {
-      ObjString *name =
-          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
+      ObjString *name = AS_STRING(
+          frame->closure->function->chunk.constants.values[READ_LONG()]);
       table_set(&vm.globals, name, peek(0));
       pop();
       break;
@@ -253,8 +253,8 @@ static InterpretResult run() {
       break;
     }
     case OP_GET_GLOBAL_LONG: {
-      ObjString *name =
-          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
+      ObjString *name = AS_STRING(
+          frame->closure->function->chunk.constants.values[READ_LONG()]);
       Value value;
       if (!table_get(&vm.globals, name, &value)) {
         runtime_error("Undefined variable '%s'.", name->chars);
@@ -273,8 +273,8 @@ static InterpretResult run() {
       break;
     }
     case OP_SET_GLOBAL_LONG: {
-      ObjString *name =
-          AS_STRING(frame->function->chunk.constants.values[READ_LONG()]);
+      ObjString *name = AS_STRING(
+          frame->closure->function->chunk.constants.values[READ_LONG()]);
       if (table_set(&vm.globals, name, peek(0))) {
         table_delete(&vm.globals, name);
         runtime_error("Undefined variable: '%s'", name->chars);

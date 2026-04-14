@@ -50,6 +50,11 @@ typedef struct {
   bool is_const;
 } Local;
 
+typedef struct {
+  Byte index;
+  bool is_local;
+} UpValue;
+
 typedef enum {
   TYPE_FUNCTION,
   TYPE_SCRIPT,
@@ -62,6 +67,7 @@ typedef struct Compiler {
 
   Local locals[UINT16_MAX + 1];
   int local_count;
+  UpValue up_values[UINT8_MAX - 1];
   int scope_depth;
 } Compiler;
 
@@ -253,6 +259,39 @@ static void declaration();
 static int identifier_constant(Token *name);
 static int resolve_local(Compiler *compiler, Token *name);
 
+static int add_up_value(Compiler *compiler, Byte index, bool is_local) {
+  int up_value_count = compiler->function->up_value_count;
+
+  for (int i = 0; i < up_value_count; ++i) {
+    UpValue *up_value = &compiler->up_values[i];
+    if (up_value->index == index && up_value->is_local == is_local) {
+      return i;
+    }
+  }
+
+  if (up_value_count > UINT8_MAX - 1) {
+    error("Too many closure variables in function");
+    return 0;
+  }
+
+  compiler->up_values[up_value_count].is_local = is_local;
+  compiler->up_values[up_value_count].index = index;
+  return compiler->function->up_value_count++;
+}
+
+static int resolve_upvalue(Compiler *compiler, Token *name) {
+  if (compiler->enclosing == NULL) {
+    return -1;
+  }
+
+  int local = resolve_local(compiler, name);
+  if (local != -1) {
+    return add_up_value(compiler, (Byte)local, true);
+  }
+
+  return -1;
+}
+
 static void binary(bool can_assign) {
   TokenType op_type = parser.previous.type;
   ParseRule *rule = get_rule(op_type);
@@ -376,33 +415,27 @@ static void string(bool can_assign) {
       copy_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void named_variable(Token name, bool can_assign) {
-  uint8_t get_op, set_op;
+static void named_variable(Token name, bool canAssign) {
+  uint8_t getOp, setOp;
   int arg = resolve_local(current, &name);
 
-  bool is_local = false;
-  if (arg == -1) {
-    arg = identifier_constant(&name);
+  if (arg != -1) {
+    getOp = OP_GET_LOCAL;
+    setOp = OP_SET_LOCAL;
+  } else if ((arg = resolve_upvalue(current, &name)) != -1) {
+    getOp = OP_GET_UPVALUE;
+    setOp = OP_SET_UPVALUE;
   } else {
-    is_local = true;
+    arg = identifier_constant(&name);
+    getOp = OP_GET_GLOBAL;
+    setOp = OP_SET_GLOBAL;
   }
 
-  if (can_assign && match(TOKEN_EQUAL)) {
-    if (is_local && current->locals[arg].is_const) {
-      error("Cannot reassign const variable");
-    }
+  if (canAssign && match(TOKEN_EQUAL)) {
     expression();
-    if (is_local) {
-      emit_local_with_index(OP_SET_LOCAL, OP_SET_LOCAL_LONG, arg);
-    } else {
-      emit_global_with_index(OP_SET_GLOBAL, OP_SET_GLOBAL_LONG, arg);
-    }
+    emit_two_bytes(setOp, (uint8_t)arg);
   } else {
-    if (is_local) {
-      emit_local_with_index(OP_GET_LOCAL, OP_GET_LOCAL_LONG, arg);
-    } else {
-      emit_global_with_index(OP_GET_GLOBAL, OP_GET_GLOBAL_LONG, arg);
-    }
+    emit_two_bytes(getOp, (uint8_t)arg);
   }
 }
 

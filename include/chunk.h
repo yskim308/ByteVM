@@ -6,6 +6,8 @@
 #include "value.h"
 
 typedef enum {
+  OP_GET_UPVALUE,
+  OP_SET_UPVALUE,
   OP_RETURN,
   OP_CONSTANT,
   OP_CONSTANT_LONG,
