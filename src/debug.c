@@ -83,7 +83,7 @@ int disassemble_instruction(Chunk *chunk, int offset) {
     printf("\n");
 
     ObjFunction *function = AS_FUNCTION(chunk->constants.values[constant]);
-    for (int j = 0; j < function->up_value_count; j++) {
+    for (int j = 0; j < function->upvalue_count; j++) {
       int isLocal = chunk->code[offset++];
       int index = chunk->code[offset++];
       printf("%04d      |                     %s %d\n", offset - 2,

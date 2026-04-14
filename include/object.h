@@ -36,7 +36,7 @@ struct Obj {
 typedef struct {
   Obj obj;
   int arity;
-  int up_value_count;
+  int upvalue_count;
   Chunk chunk;
   ObjString *name;
 } ObjFunction;
@@ -64,6 +64,8 @@ typedef struct ObjUpValue {
 typedef struct {
   Obj obj;
   ObjFunction *function;
+  ObjUpValue **upvalues;
+  int upvalue_count;
 } ObjClosure;
 
 ObjFunction *new_function();

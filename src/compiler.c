@@ -260,9 +260,9 @@ static int identifier_constant(Token *name);
 static int resolve_local(Compiler *compiler, Token *name);
 
 static int add_up_value(Compiler *compiler, Byte index, bool is_local) {
-  int up_value_count = compiler->function->up_value_count;
+  int upvalue_count = compiler->function->upvalue_count;
 
-  for (int i = 0; i < up_value_count; ++i) {
+  for (int i = 0; i < upvalue_count; ++i) {
     UpValue *up_value = &compiler->up_values[i];
     if (up_value->index == index && up_value->is_local == is_local) {
       return i;
@@ -274,9 +274,9 @@ static int add_up_value(Compiler *compiler, Byte index, bool is_local) {
     return 0;
   }
 
-  compiler->up_values[up_value_count].is_local = is_local;
-  compiler->up_values[up_value_count].index = index;
-  return compiler->function->up_value_count++;
+  compiler->up_values[upvalue_count].is_local = is_local;
+  compiler->up_values[upvalue_count].index = index;
+  return compiler->function->upvalue_count++;
 }
 
 static int resolve_upvalue(Compiler *compiler, Token *name) {
@@ -661,7 +661,7 @@ static void function(FunctionType type) {
   ObjFunction *function = end_compiler();
   emit_two_bytes(OP_CLOSURE, make_constant(OBJ_VAL(function)));
 
-  for (int i = 0; i < function->up_value_count; ++i) {
+  for (int i = 0; i < function->upvalue_count; ++i) {
     emit_byte(compiler.up_values[i].is_local ? 1 : 0);
     emit_byte(compiler.up_values[i].index);
   }

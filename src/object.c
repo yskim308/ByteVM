@@ -32,7 +32,7 @@ ObjFunction *new_function() {
   ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
   function->arity = 0;
   function->name = NULL;
-  function->up_value_count = 0;
+  function->upvalue_count = 0;
   init_chunk(&function->chunk);
   return function;
 }
