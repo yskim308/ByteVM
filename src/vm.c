@@ -23,6 +23,7 @@ static Value clock_native(int arg_count, Value *args) {
 static void reset_stack() {
   vm.stack_top = vm.stack;
   vm.frame_count = 0;
+  vm.open_upvalues = NULL;
 }
 
 static void runtime_error(const char *format, ...) {
@@ -128,7 +129,27 @@ static bool call_value(Value callee, int arg_count) {
 }
 
 static ObjUpValue *capture_upvalue(Value *local) {
+  ObjUpValue *prev_upvalue = NULL;
+  ObjUpValue *upvalue = vm.open_upvalues;
+
+  while (upvalue != NULL && upvalue->location > local) {
+    prev_upvalue = upvalue;
+    upvalue = upvalue->next;
+  }
+
+  if (upvalue != NULL && upvalue->location == local) {
+    return upvalue;
+  }
+
   ObjUpValue *created_upvalue = new_upvalue(local);
+  created_upvalue->next = upvalue;
+
+  if (prev_upvalue == NULL) {
+    vm.open_upvalues = created_upvalue;
+  } else {
+    prev_upvalue->next = created_upvalue;
+  }
+
   return created_upvalue;
 }
 
