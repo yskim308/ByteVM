@@ -153,6 +153,15 @@ static ObjUpValue *capture_upvalue(Value *local) {
   return created_upvalue;
 }
 
+static void close_upvalues(Value *last) {
+  while (vm.open_upvalues != NULL && vm.open_upvalues->location >= last) {
+    ObjUpValue *upvalue = vm.open_upvalues;
+    upvalue->closed = *upvalue->location;
+    upvalue->location = &upvalue->closed;
+    vm.open_upvalues = upvalue->next;
+  }
+}
+
 static bool is_falsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -384,6 +393,11 @@ static InterpretResult run() {
       ip = frame->ip;
       break;
     }
+    case OP_CLOSE_UPVALUE: {
+      close_upvalues(vm.stack_top - 1);
+      pop();
+      break;
+    }
     case OP_GET_UPVALUE: {
       Byte slot = READ_BYTE();
       push(*frame->closure->upvalues[slot]->location);
@@ -411,6 +425,7 @@ static InterpretResult run() {
     }
     case OP_RETURN: {
       Value result = pop();
+      close_upvalues(frame->slots);
       vm.frame_count--;
       if (vm.frame_count == 0) {
         pop();
