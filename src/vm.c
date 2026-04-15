@@ -64,6 +64,9 @@ void init_VM() {
   vm.gray_count = 0;
   vm.gray_stack = NULL;
 
+  vm.bytes_allocated = 0;
+  vm.next_gc = 1024 * 1024;
+
   init_table(&vm.strings);
   init_table(&vm.globals);
 

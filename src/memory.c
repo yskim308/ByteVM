@@ -12,11 +12,18 @@
 #include <stdio.h>
 #endif
 
+#define GC_HEAP_GROWTH_FACTOR 2
+
 void *reallocate(void *pointer, size_t old_size, size_t new_size) {
+  vm.bytes_allocated += new_size - old_size;
   if (new_size > old_size) {
 #ifdef DEBUG_STRESS_GC
     collect_garbage();
 #endif
+  }
+
+  if (vm.bytes_allocated > vm.next_gc) {
+    collect_garbage();
   }
 
   if (new_size == 0) {
@@ -184,6 +191,8 @@ void collect_garbage() {
   trace_references();
   table_remove_white(&vm.strings);
   sweep();
+
+  vm.next_gc = vm.bytes_allocated * GC_HEAP_GROWTH_FACTOR;
 #ifdef DEBUG_LOG_GC
   printf("-- gc end\n");
 #endif
