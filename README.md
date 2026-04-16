@@ -57,6 +57,26 @@ The original implementation supports OOP as well, but I chose not to implement i
 
 This implementation focuses on memory efficiency and execution speed through a stack-based architecture.
 
+```mermaid
+flowchart LR
+    A[Source] --> B[Scanner]
+    B --> C[Compiler]
+    C --> D[Bytecode]
+    D --> E[VM]
+
+    subgraph VM
+        E --> F[Dispatch Loop]
+        F --> G[Stack]
+        F --> H[Frames]
+        F --> I[Upvalues]
+        F --> J[Heap]
+        J --> K[GC]
+        J --> L[Globals / Interning]
+    end
+
+    E --> M[Output]
+```
+
 ### 1. The Compiler Pipeline
 
 - **Scanner:** A high-speed lexer that produces tokens on-demand to minimize memory overhead.
